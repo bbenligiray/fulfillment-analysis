@@ -32,6 +32,11 @@ async function main() {
         const url = `https://api-moonbeam.moonscan.io/api?module=account&address=0xa0AD79D995DdeeB18a14eAef56A549A04e3Aa1Bd&apikey=${apiKey}&action=txlist&sort=desc`;
         const txes = JSON.parse(await get(url)).result;
         fs.writeFileSync(`${process.env.NETWORK}.json`, JSON.stringify(txes, null, 2));
+    } else if (process.env.NETWORK === 'arbitrum-nova') {
+        const apiKey = process.env['ETHERSCAN_API_KEY_arbitrum-nova'];
+        const url = `https://api-nova.arbiscan.io/api?module=account&address=0xd864A45334C7a632cA9149993682354D7f967F28&apikey=${apiKey}&action=txlist&sort=desc`;
+        const txes = JSON.parse(await get(url)).result;
+        fs.writeFileSync(`${process.env.NETWORK}.json`, JSON.stringify(txes, null, 2));
     }
 }
 
