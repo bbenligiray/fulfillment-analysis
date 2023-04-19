@@ -1,7 +1,13 @@
 const fs = require('fs');
 const request = require('request');
+require('dotenv').config();
 
-const apiKey = '...';
+let apiKey;
+if (process.env.NETWORK === 'ethereum-goerli-testnet') {
+    apiKey = process.env['ETHERSCAN_API_KEY_ethereum-goerli-testnet'];
+} else if (process.env.NETWORK === 'moonbeam') {
+    apiKey = process.env['ETHERSCAN_API_KEY_moonbeam'];
+}
 
 function get(url) {
     return new Promise((resolve, reject) => {
@@ -16,10 +22,17 @@ function get(url) {
 }
 
 async function main() {
-    const url = `https://api-goerli.etherscan.io/api?module=account&address=0xa0AD79D995DdeeB18a14eAef56A549A04e3Aa1Bd&apikey=${apiKey}&action=txlist&sort=desc`;
-    const txes = JSON.parse(await get(url)).result;
-    console.log(txes.length);
-    fs.writeFileSync('txes.json', JSON.stringify(txes, null, 2));
+    if (process.env.NETWORK === 'ethereum-goerli-testnet') {
+        const apiKey = process.env['ETHERSCAN_API_KEY_ethereum-goerli-testnet'];
+        const url = `https://api-goerli.etherscan.io/api?module=account&address=0xa0AD79D995DdeeB18a14eAef56A549A04e3Aa1Bd&apikey=${apiKey}&action=txlist&sort=desc`;
+        const txes = JSON.parse(await get(url)).result;
+        fs.writeFileSync(`${process.env.NETWORK}.json`, JSON.stringify(txes, null, 2));
+    } else if (process.env.NETWORK === 'moonbeam') {
+        const apiKey = process.env['ETHERSCAN_API_KEY_moonbeam'];
+        const url = `https://api-moonbeam.moonscan.io/api?module=account&address=0xa0AD79D995DdeeB18a14eAef56A549A04e3Aa1Bd&apikey=${apiKey}&action=txlist&sort=desc`;
+        const txes = JSON.parse(await get(url)).result;
+        fs.writeFileSync(`${process.env.NETWORK}.json`, JSON.stringify(txes, null, 2));
+    }
 }
 
 main();

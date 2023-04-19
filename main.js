@@ -13,7 +13,7 @@ function timestampToISOString(timestamp) {
 }
 
 async function main() {
-    const txes = JSON.parse(fs.readFileSync('txes.json'));
+    const txes = JSON.parse(fs.readFileSync('ethereum-goerli-testnet.json'));
     for (const tx of txes) {
         if (tx.methodId === methodIds.fulfill) {
             const decodedInput = ethers.utils.defaultAbiCoder.decode(
@@ -62,7 +62,7 @@ async function main() {
     // Both of these happened on September 28, 2022. Seems to be a chain anomaly, will not
     // investigate further.
     for (const erroredFulfillTx of erroredFulfillTxes) {
-        const txesWithMatchingRequestId = txes.filter((tx) => {return tx.decodedInput.requestId === erroredFulfillTx.decodedInput.requestId && tx.hash !== erroredFulfillTx.hash});
+        const txesWithMatchingRequestId = txes.filter((tx) => { return tx.decodedInput.requestId === erroredFulfillTx.decodedInput.requestId && tx.hash !== erroredFulfillTx.hash });
         assert(txesWithMatchingRequestId.length === 1);
         assert(txesWithMatchingRequestId[0].methodId === methodIds.fail);
     }
@@ -75,30 +75,33 @@ async function main() {
         if (!txesForRequestIdIsCovered[requestId]) {
             txesForRequestIdIsCovered[requestId] = true;
             console.log(`\nRequest ID: ${requestId}`);
+            if (erroredFailTx.decodedInput.airnode === '0x6238772544f029ecaBfDED4300f13A3c4FE84E1D') {
+                console.log('Request made to Nodary');
+            }
             console.log(`Most recent activity: ${timestampToISOString(erroredFailTx.timeStamp)}`);
-            const successfulTxesWithMatchingRequestId = txes.filter((tx) => {return tx.decodedInput.requestId === requestId && tx.isError === '0'});
+            const successfulTxesWithMatchingRequestId = txes.filter((tx) => { return tx.decodedInput.requestId === requestId && tx.isError === '0' });
             assert(successfulTxesWithMatchingRequestId.length <= 1);
             if (successfulTxesWithMatchingRequestId.length === 1) {
                 console.log('There is a successful tx with matching request ID:');
                 console.log(successfulTxesWithMatchingRequestId[0].decodedInput);
             }
-            const erroredTxesWithMatchingRequestId = erroredTxes.filter((tx) => {return tx.decodedInput.requestId === requestId});
+            const erroredTxesWithMatchingRequestId = erroredTxes.filter((tx) => { return tx.decodedInput.requestId === requestId });
             console.log(`Errored fail txes: ${erroredTxesWithMatchingRequestId.length}`);
             console.log('Error messages of errored fail txes and their frequency:');
             const errorMessagesToFrequency = erroredTxesWithMatchingRequestId.reduce((acc, tx) => {
-                    if (acc[tx.decodedInput.errorMessage]) {
-                        acc[tx.decodedInput.errorMessage]++;
-                    } else {
-                        acc[tx.decodedInput.errorMessage] = 1;
-                    }
+                if (acc[tx.decodedInput.errorMessage]) {
+                    acc[tx.decodedInput.errorMessage]++;
+                } else {
+                    acc[tx.decodedInput.errorMessage] = 1;
+                }
                 return acc;
             }, {});
             console.log(errorMessagesToFrequency);
         }
     }
-    
+
     // Print error message for successful fail txes for reference
-    console.log('\nError messages of successful fail txes and their frequency:');
+    console.log('Error messages of successful fail txes and their frequency:');
     const errorMessagesForSuccessfulFailTxes = txes.reduce((acc, tx) => {
         if (tx.methodId === methodIds.fail && tx.isError === '0') {
             if (acc[tx.decodedInput.errorMessage]) {
